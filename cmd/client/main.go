@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jroimartin/gocui"
 	. "github.com/robaho/go-trader/pkg/common"
 	"github.com/robaho/go-trader/pkg/connector"
-	"github.com/robaho/gocui"
 )
 
 var gui *gocui.Gui
@@ -210,7 +210,7 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Title = "Log"
-		v.MaxLines = 1000
+		//v.MaxLines = 1000
 		v.Wrap = true
 	}
 	if v, err := g.SetView("orders", cols[1], rows[0], cols[2], rows[1]); err != nil {
@@ -223,7 +223,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.MaxLines = 1000
+		//v.MaxLines = 1000
 		v.Autoscroll = true
 		v.Title = "Order Fills"
 	}
@@ -231,7 +231,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.MaxLines = 1000
+		//v.MaxLines = 1000
 		v.Autoscroll = true
 		v.Title = "Streaming Markets"
 	}
@@ -396,7 +396,7 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
-	g.EscapeProcessing = false // we manage our own colors
+	//g.EscapeProcessing = false // we manage our own colors
 	defer g.Close()
 
 	gui = g

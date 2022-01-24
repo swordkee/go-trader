@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"golang.org/x/net/ipv4"
 	"io"
 	"log"
 	"net"
@@ -53,27 +54,56 @@ func StartMarketDataReceiver(c ExchangeConnector, callback ConnectorCallback, pr
 
 	replayAddr := rhost + ":" + rport
 
-	addr, err := net.ResolveUDPAddr("udp", saddr)
+	addr, err := net.ResolveUDPAddr("udp4", saddr)
 	if err != nil {
 		panic(err)
 	}
 
 	go func() {
-		var packetNumber uint64 = 0
-		l, err := net.ListenMulticastUDP("udp", _intf, addr)
+		conn, err := net.ListenUDP("udp4", addr)
 		if err != nil {
-			panic(err)
+			log.Println(err)
+			return
 		}
-		log.Println("listening for market data on", l.LocalAddr())
-		l.SetReadBuffer(16 * 1024 * 1024)
-		for {
-			b := make([]byte, protocol.MaxMsgSize)
-			n, _, err := l.ReadFromUDP(b)
-			if err != nil {
-				log.Fatal("ReadFromUDP failed:", err)
+		pc := ipv4.NewPacketConn(conn)
+		if err := pc.JoinGroup(_intf, addr); err != nil {
+			return
+		}
+		if loop, err := pc.MulticastLoopback(); err == nil {
+			fmt.Printf("MulticastLoopback status:%v", loop)
+			if !loop {
+				if err := pc.SetMulticastLoopback(true); err != nil {
+					fmt.Printf("SetMulticastLoopback error:%v", err)
+				}
 			}
-			packetNumber = md.packetReceived(packetNumber, b[:n])
 		}
+		if _, err := conn.WriteTo([]byte("hello"), addr); err != nil {
+			fmt.Printf("Write failed, %v	", err)
+		}
+		buf := make([]byte, 16*1024*1024)
+		for {
+			if n, addr, err := conn.ReadFrom(buf); err != nil {
+				fmt.Printf("error %v", err)
+			} else {
+				fmt.Printf("recv %s from %v", string(buf[:n]), addr)
+			}
+		}
+		//var packetNumber uint64 = 0
+		//l, err := net.ListenMulticastUDP("udp4", nil, addr)
+		//if err != nil {
+		//	log.Println(err)
+		//	//panic(err)
+		//}
+		//log.Println("listening for market data on", l.LocalAddr())
+		//pc.SetReadBuffer(16 * 1024 * 1024)
+		//for {
+		//	b := make([]byte, protocol.MaxMsgSize)
+		//	n, _, err := l.ReadFromUDP(b)
+		//	if err != nil {
+		//		log.Fatal("ReadFromUDP failed:", err)
+		//	}
+		//	packetNumber = md.packetReceived(packetNumber, b[:n])
+		//}
 	}()
 
 	go func() {

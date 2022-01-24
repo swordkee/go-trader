@@ -13,8 +13,8 @@ func TestEncodeDecodeBook(t *testing.T) {
 	IMap.Put(instrument)
 
 	book := Book{Instrument: instrument, Sequence: 123456789}
-	book.Bids = []BookLevel{BookLevel{NewDecimal("99.4567"), NewDecimal("100")}}
-	book.Asks = []BookLevel{BookLevel{NewDecimal("100.4567"), NewDecimal("120")}}
+	book.Bids = []BookLevel{{NewDecimal("99.4567"), NewDecimal("100")}}
+	book.Asks = []BookLevel{{NewDecimal("100.4567"), NewDecimal("120")}}
 
 	buf := new(bytes.Buffer)
 	encodeBook(buf, &book)
